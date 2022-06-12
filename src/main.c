@@ -12,14 +12,16 @@ register */
 #define STM32_GPIO_OTYPER_OFFSET 0x0004 /* GPIO port output type register */
 #define STM32_GPIO_PUPDR_OFFSET 0x000c /* GPIO port pull-up/pull-down
 register */
+#define STM32_GPIO_BSRR_OFFSET 0x0018 /* GPIO port bit set/reset register */
 /* Register Addresses *******************************************************/
 #define STM32_RCC_AHB1ENR (STM32_RCC_BASE+STM32_RCC_AHB1ENR_OFFSET)
 #define STM32_GPIOC_MODER (STM32_GPIOC_BASE+STM32_GPIO_MODER_OFFSET)
 #define STM32_GPIOC_OTYPER (STM32_GPIOC_BASE+STM32_GPIO_OTYPER_OFFSET)
 #define STM32_GPIOC_PUPDR (STM32_GPIOC_BASE+STM32_GPIO_PUPDR_OFFSET)
+#define STM32_GPIOC_BSRR (STM32_GPIOC_BASE+STM32_GPIO_BSRR_OFFSET)
 /* AHB1 Peripheral Clock enable register */
 #define RCC_AHB1ENR_GPIOCEN (1 << 2) /* Bit 2: IO port C clock
-enable */ ...
+enable */
 /* GPIO port mode register */
 #define GPIO_MODER_INPUT (0) /* Input */
 #define GPIO_MODER_OUTPUT (1) /* General purpose output mode */
@@ -38,6 +40,12 @@ enable */ ...
 #define GPIO_PUPDR_PULLDOWN (2) /* Pull-down */
 #define GPIO_PUPDR13_SHIFT (26)
 #define GPIO_PUPDR13_MASK (3 << GPIO_PUPDR13_SHIFT)
+
+#define GPIO_BSRR_SET(n) (1 << (n))
+#define GPIO_BSRR_RST(n) (1 << (n + 16))
+
+#define LED_DELAY  63000
+
 int main(int argc, char *argv[])
 {
 uint32_t reg;
@@ -57,15 +65,23 @@ reg = *pGPIOC_MODER;
 reg &= ~(GPIO_MODER13_MASK);
 reg |= (GPIO_MODER_OUTPUT << GPIO_MODER13_SHIFT);
 *pGPIOC_MODER = reg;
+
 reg = *pGPIOC_OTYPER;
 reg &= ~(GPIO_OT13_MASK);
 reg |= (GPIO_OTYPER_PP << GPIO_OT13_SHIFT);
 *pGPIOC_OTYPER = reg;
+
 reg = *pGPIOC_PUPDR;
 reg &= ~(GPIO_PUPDR13_MASK);
 reg |= (GPIO_PUPDR_NONE << GPIO_PUPDR13_SHIFT);
 *pGPIOC_PUPDR = reg;
-while(1);
-/* Nao deveria chegar aqui */
+while(1)
+{
+    *pGPIOC_BSRR = GPIO_BSRR_SET(13);
+    for(uint32_t i = 0; i < LED_DELAY; i++);
+    *pGPIOC_BSRR = GPIO_BSRR_RST(13);
+    for(uint32_t i = 0; i < LED_DELAY; i++);
+}
+
 return EXIT_SUCCESS;
 }
